@@ -10,7 +10,8 @@ module Jekyll
     # Main plugin action, called by Jekyll-core
     def generate(site)
       @site = site
-      @site.pages << sitemap unless file_exists?("sitemap.xml")
+      @output = site.config["sitemap"] || "sitemap.xml"
+      @site.pages << sitemap unless file_exists?(@output)
       @site.pages << robots unless file_exists?("robots.txt")
     end
 
@@ -41,16 +42,16 @@ module Jekyll
     end
 
     # Destination for sitemap.xml file within the site source directory
-    def destination_path(file = "sitemap.xml")
-      @site.in_dest_dir(file)
+    def destination_path(file = false)
+      @site.in_dest_dir(file || "sitemap.xml")
     end
 
     def sitemap
-      site_map = PageWithoutAFile.new(@site, __dir__, "", "sitemap.xml")
+      site_map = PageWithoutAFile.new(@site, __dir__, "", @output)
       site_map.content = File.read(source_path).gsub(MINIFY_REGEX, "")
       site_map.data["layout"] = nil
       site_map.data["static_files"] = static_files.map(&:to_liquid)
-      site_map.data["xsl"] = file_exists?("sitemap.xsl")
+      site_map.data["xsl"] = file_exists?("#{File.basename(@output, ".*")}.xsl")
       site_map
     end
 
